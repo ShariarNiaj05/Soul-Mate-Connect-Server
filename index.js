@@ -10,12 +10,19 @@ const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
 const port = process.env.PORT || 5000
 
 // middleware
-const corsOptions = {
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
-  // credentials: true,
-  optionSuccessStatus: 200,
-}
-app.use(cors(corsOptions))
+// const corsOptions = {
+//   origin: [
+//     'http://localhost:5173',
+//     'http://localhost:5174',
+//     'https://soul-mate-connect.web.app/',
+//     'https://soul-mate-connect.firebaseapp.com/'
+//   ],
+//   // credentials: true,
+//   optionSuccessStatus: 200,
+// }
+// app.use(cors(corsOptions))
+
+app.use(cors())
 app.use(express.json())
 app.use(cookieParser())
 app.use(morgan('dev'))
@@ -34,6 +41,7 @@ const client = new MongoClient(uri, {
 
 const userCollection = client.db('SoulMateConnectDB').collection('users')
 const biodatasCollection = client.db('SoulMateConnectDB').collection('biodatas')
+const favouritesCollection = client.db('SoulMateConnectDB').collection('favourites')
 
 
 
@@ -92,7 +100,7 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/users/admin/:email', verifyToken, async (req, res) => {
+    app.get('/users/admin/:email', async (req, res) => {
       const email = req.params.email;
       if (email !== req.decoded.email) {
         return res.status(403).send({ message: 'forbidden access' })
@@ -125,7 +133,7 @@ async function run() {
       res.send(result)
 
     })
-    app.get('/biodata-details/:id', verifyToken, async (req, res) => {
+    app.get('/biodata-details/:id', async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
       const result = await biodatasCollection.findOne(query)
@@ -164,7 +172,28 @@ async function run() {
       }
     })
 
+    app.patch('/biodatas/status/:id', async (req, res) => {
+      const id = req.params.id;
+      const biodataStatus = req.body.biodataStatus;
 
+      const query = {_id: new ObjectId(id)}
+      const updateDoc = {
+        $set: {
+          biodataStatus
+        }
+      }
+      const result = await biodatasCollection.updateOne(query, updateDoc)
+      // console.log(result);
+      res.send(result)
+    })
+
+
+    // favourites api 
+    app.post('/favourites', async (req, res) => {
+      const favouriteBiodata = req.body;
+      const result = await favouritesCollection.insertOne(favouriteBiodata)
+      res.send(result)
+    })
 
 
 
