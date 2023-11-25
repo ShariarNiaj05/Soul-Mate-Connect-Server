@@ -117,6 +117,14 @@ async function run() {
       res.send(result)
 
     })
+
+    app.get('/biodatas/:email', async (req, res) => {
+      const email = req.params.email
+      const result = await biodatasCollection.findOne({email})
+      console.log(result);
+      res.send(result)
+
+    })
     app.get('/biodata-details/:id', verifyToken, async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
