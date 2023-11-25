@@ -100,21 +100,16 @@ async function run() {
       res.send(result)
     })
 
-    app.get('/users/admin/:email', async (req, res) => {
+    app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
-      if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'forbidden access' })
-      }
+
 
       const query = { email: email }
       const user = await userCollection.findOne(query)
 
-      let admin = false
-      if (user) {
-        admin = user?.role === 'admin'
-      }
 
-      res.send({ admin })
+
+      res.send(user)
     })
 
 
@@ -128,8 +123,7 @@ async function run() {
 
     app.get('/biodatas/:email', async (req, res) => {
       const email = req.params.email
-      const result = await biodatasCollection.findOne({email})
-      console.log(result);
+      const result = await biodatasCollection.findOne({ email })
       res.send(result)
 
     })
@@ -176,7 +170,7 @@ async function run() {
       const id = req.params.id;
       const biodataStatus = req.body.biodataStatus;
 
-      const query = {_id: new ObjectId(id)}
+      const query = { _id: new ObjectId(id) }
       const updateDoc = {
         $set: {
           biodataStatus
@@ -195,6 +189,21 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/favourites/:email', async (req, res) => {
+      const email = req.params.email;
+      const query = { email }
+      const result = await favouritesCollection.find(query).toArray()
+      res.send(result)
+
+    })
+
+    app.delete('/favourites/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await favouritesCollection.deleteOne(query)
+      console.log(result);
+      res.send(result)
+    })
 
 
 
