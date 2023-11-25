@@ -100,16 +100,36 @@ async function run() {
       res.send(result)
     })
 
+    app.get('/users', verifyToken, verifyAdmin, async (req, res) => {
+      let query = {}
+      if (req.query.search) {
+        const searchResult = new RegExp(req.query.search, 'i')
+        query = {name: searchResult}
+      }
+      const result = await userCollection.find(query).toArray()
+      res.send(result)
+    })
+
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
-
-
       const query = { email: email }
       const user = await userCollection.findOne(query)
-
-
-
       res.send(user)
+    })
+
+    app.patch('/users/:id', async (req, res) => {
+      const id = req.params.id;
+      const userRole = req.body.userRole;
+
+      const query = { _id: new ObjectId(id) }
+      const updateUserRole = {
+        $set: {
+          role: userRole,
+          
+        }
+      }
+      const updatedUserRole = await userCollection.updateOne(query, updateUserRole)
+      res.send({updatedUserRole, })
     })
 
 
