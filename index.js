@@ -244,12 +244,12 @@ async function run() {
 
     // contact request api 
     app.get('/contact-request', async (req, res) => {
-      const pendingContactRequest = {status: 'pending'}
+      const pendingContactRequest = { status: 'pending' }
       const result = await paymentCollection.find(pendingContactRequest).toArray()
       console.log(result);
       res.send(result)
     })
-    
+
     app.patch('/contact-request/:id', async (req, res) => {
       const id = req.params.id
       const query = { _id: new ObjectId(id) }
@@ -310,6 +310,37 @@ async function run() {
     })
 
 
+    // admin stats api
+    app.get('/admin-stats', async (req, res) => {
+      const totalBiodataCount = await biodatasCollection?.estimatedDocumentCount()
+
+      const maleQuery = { biodataType: 'male' }
+      const totalMaleBiodataCount = (await biodatasCollection.find(maleQuery).toArray()).length
+
+      const femaleQuery = { biodataType: 'female' }
+      const totalFemaleBiodataCount = (await biodatasCollection.find(femaleQuery).toArray()).length
+
+
+      const premiumQuery = { status: 'premium' }
+      const totalPremiumBiodataCount = (await biodatasCollection.find(premiumQuery).toArray()).length
+
+
+
+      const totalRevenueCount = await paymentCollection.aggregate([
+        {
+          $group: {
+            _id: null,
+            totalRevenue: {
+              $sum: '$price'
+            }
+          }
+        }
+      ]).toArray()
+      const revenue = totalRevenueCount.length > 0 ? totalRevenueCount[0].totalRevenue : 0
+
+      console.log(totalBiodataCount, totalMaleBiodataCount, totalFemaleBiodataCount);
+      res.send({ totalBiodataCount, totalMaleBiodataCount, totalPremiumBiodataCount, totalFemaleBiodataCount, revenue })
+    })
 
 
     // Send a ping to confirm a successful connection
