@@ -202,6 +202,22 @@ async function run() {
       res.send(result)
     })
 
+    app.patch('/biodata/make-premium/:id', async (req, res) => {
+      const id = req.params.id;
+
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: {
+          biodataStatus: 'premium'
+        }
+      }
+      const result = await biodatasCollection.updateOne(query, updateDoc)
+      // console.log(result);
+      res.send(result)
+    })
+
+
+
 
     // favourites api 
     app.post('/favourites', async (req, res) => {
