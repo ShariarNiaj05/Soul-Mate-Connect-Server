@@ -6,7 +6,7 @@ const cookieParser = require('cookie-parser')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb')
 const jwt = require('jsonwebtoken')
 const morgan = require('morgan')
-const stripe = require('stripe')(process.env.PAYMENT_SECRET_KEY)
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY)
 const port = process.env.PORT || 5000
 
 // middleware
@@ -42,6 +42,7 @@ const client = new MongoClient(uri, {
 const userCollection = client.db('SoulMateConnectDB').collection('users')
 const biodatasCollection = client.db('SoulMateConnectDB').collection('biodatas')
 const favouritesCollection = client.db('SoulMateConnectDB').collection('favourites')
+const paymentCollection = client.db('SoulMateConnectDB').collection('payments')
 
 
 
@@ -50,7 +51,7 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     // await client.connect();
-    // jwt related api 
+
 
     // jwt related api 
     app.post('/jwt', async (req, res) => {
@@ -104,7 +105,7 @@ async function run() {
       let query = {}
       if (req.query.search) {
         const searchResult = new RegExp(req.query.search, 'i')
-        query = {name: searchResult}
+        query = { name: searchResult }
       }
       const result = await userCollection.find(query).toArray()
       res.send(result)
@@ -125,11 +126,11 @@ async function run() {
       const updateUserRole = {
         $set: {
           role: userRole,
-          
+
         }
       }
       const updatedUserRole = await userCollection.updateOne(query, updateUserRole)
-      res.send({updatedUserRole, })
+      res.send({ updatedUserRole, })
     })
 
 
@@ -227,8 +228,43 @@ async function run() {
 
 
 
+    // payment api 
+    app.post('/create-payment-intent', async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100);
+      console.log(process.env.STRIPE_SECRET_KEY, 'stripe key')
+      console.log(amount, 'amount inside the intent')
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: amount,
+        currency: 'BDT',
+        "payment_method_types": [
+          "card"
+        ],
+      });
+      console.log(paymentIntent);
+
+      res.send({
+        clientSecret: paymentIntent.client_secret
+      })
+    });
+
+    app.post('/payments', async (req, res) => {
+      const payment = req.body;
+      const paymentResult = await paymentCollection.insertOne(payment)
 
 
+      res.send({ paymentResult })
+    })
+
+    app.get('/payments/:email', verifyToken, async (req, res) => {
+
+      const email = req.params.email;
+      const query = { email }
+
+      const result = await paymentCollection.find(query).toArray()
+      res.send(result)
+    })
 
 
 
