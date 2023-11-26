@@ -226,6 +226,33 @@ async function run() {
       res.send(result)
     })
 
+    // contact request api 
+    app.get('/contact-request', async (req, res) => {
+      const pendingContactRequest = {status: 'pending'}
+      const result = await paymentCollection.find(pendingContactRequest).toArray()
+      console.log(result);
+      res.send(result)
+    })
+    
+    app.patch('/contact-request/:id', async (req, res) => {
+      const id = req.params.id
+      const query = { _id: new ObjectId(id) }
+      const updateDoc = {
+        $set: {
+          status: 'approved'
+        }
+      }
+      const result = await paymentCollection.updateOne(query, updateDoc)
+      res.send(result)
+    })
+
+    app.delete('/contact-request/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      const result = await paymentCollection.deleteOne(query)
+      res.send(result)
+    })
+
 
 
     // payment api 
