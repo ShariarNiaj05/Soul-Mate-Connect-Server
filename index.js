@@ -111,6 +111,8 @@ async function run() {
       res.send(result)
     })
 
+
+
     app.get('/users/:email', async (req, res) => {
       const email = req.params.email;
       const query = { email: email }
@@ -137,9 +139,68 @@ async function run() {
     // biodatas api 
 
     app.get('/biodatas', async (req, res) => {
-      const result = await biodatasCollection.find().toArray()
+
+      const {minAge, maxAge, biodataType, division} = req.query
+      const filter = {}
+      if (minAge && maxAge) {
+        filter.age = {
+          $gte: parseInt(minAge),
+          $lte: parseInt(maxAge)
+        }
+      }
+
+      if (biodataType) {
+        filter.biodataType = biodataType
+      }
+
+      if (division) {
+        filter.permanentDivision = division
+      }
+
+
+      const result = await biodatasCollection.find(filter).toArray()
       res.send(result)
 
+    })
+
+    app.get('/premium-biodatas', async (req, res) => {
+      const premiumMembersBiodata = await userCollection.aggregate([
+        {
+          $match: {role: 'premium'},
+        },
+        {
+          $lookup: {
+            from: 'biodatas',
+            localField: 'email',
+            foreignField: 'email',
+            as: 'biodata'
+          },
+        },
+        {
+          $unwind: '$biodata'
+        },
+        {
+          $sort: {'biodata.age': 1}
+        },
+        {
+          $limit: 6,
+        },
+        {
+          $project: {
+            _id: '$biodata._id',
+            name: '$biodata.name',
+            biodataId: '$biodata.biodataId',
+            biodataType: '$biodata.biodataType',
+            profileImage: '$biodata.profileImage',
+            permanentDivision: '$biodata.permanentDivision',
+            age: '$biodata.age',
+            occupation: '$biodata.occupation',
+          }
+        }
+      ]).toArray()
+
+      console.log(premiumMembersBiodata);
+      res.send(premiumMembersBiodata)
     })
 
     app.get('/biodatas/:email', async (req, res) => {
