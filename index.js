@@ -389,6 +389,48 @@ async function run() {
     })
 
 
+    app.get('/admin-success-story', async (req, res) => {
+      const result = await successStoryCollection.aggregate([
+        {
+          $lookup: {
+            from: 'biodatas',
+            localField: 'selfBiodataNumber',
+            foreignField: 'biodataId',
+            as: 'selfBiodata',
+          },
+        },
+        {
+          $unwind: '$selfBiodata',
+        },
+        {
+          $lookup: {
+            from: 'biodatas',
+            localField: 'partnerBiodataNumber',
+            foreignField: 'biodataId',
+            as: 'partnerBiodata',
+          },
+        },
+        {
+          $unwind: '$partnerBiodata',
+        },
+        {
+          $project: {
+            
+            maleBiodataId: '$selfBiodata.biodataId',
+            femaleBiodataId: '$partnerBiodata.biodataId',
+            maleBiodataType: '$selfBiodata.biodataType',
+            femaleBiodataType: '$partnerBiodata.biodataType',
+            successStoryText: 1
+          },
+        },
+      ]).toArray();
+
+     
+
+      res.send(result)
+    })
+
+
     // admin stats api
     app.get('/admin-stats', async (req, res) => {
       const totalBiodataCount = await biodatasCollection?.estimatedDocumentCount()
