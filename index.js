@@ -43,6 +43,7 @@ const userCollection = client.db('SoulMateConnectDB').collection('users')
 const biodatasCollection = client.db('SoulMateConnectDB').collection('biodatas')
 const favouritesCollection = client.db('SoulMateConnectDB').collection('favourites')
 const paymentCollection = client.db('SoulMateConnectDB').collection('payments')
+const successStoryCollection = client.db('SoulMateConnectDB').collection('successStory')
 
 
 
@@ -140,7 +141,7 @@ async function run() {
 
     app.get('/biodatas', async (req, res) => {
 
-      const {minAge, maxAge, biodataType, division} = req.query
+      const { minAge, maxAge, biodataType, division } = req.query
       const filter = {}
       if (minAge && maxAge) {
         filter.age = {
@@ -166,7 +167,7 @@ async function run() {
     app.get('/premium-biodatas', async (req, res) => {
       const premiumMembersBiodata = await userCollection.aggregate([
         {
-          $match: {role: 'premium'},
+          $match: { role: 'premium' },
         },
         {
           $lookup: {
@@ -180,7 +181,7 @@ async function run() {
           $unwind: '$biodata'
         },
         {
-          $sort: {'biodata.age': 1}
+          $sort: { 'biodata.age': 1 }
         },
         {
           $limit: 6,
@@ -367,6 +368,23 @@ async function run() {
       const query = { email }
 
       const result = await paymentCollection.find(query).toArray()
+      res.send(result)
+    })
+
+
+    // success story api 
+
+    app.post('/success-story', async (req, res) => {
+      const successStory = req.body
+
+      const result = await successStoryCollection.insertOne(successStory)
+      res.send(result)
+    })
+
+    app.get('/success-story', async (req, res) => {
+      const sortedByTimestamp = { marriageTimestamp: -1 }
+
+      const result = await successStoryCollection.find().sort(sortedByTimestamp).toArray()
       res.send(result)
     })
 
