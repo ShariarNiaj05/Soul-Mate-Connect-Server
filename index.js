@@ -141,8 +141,14 @@ async function run() {
 
     app.get('/biodatas', async (req, res) => {
 
+      console.log(req.query);
       const { minAge, maxAge, biodataType, division } = req.query
+
+      const page = parseInt(req.query.page)
+      const size = parseInt(req.query.size)
+
       const filter = {}
+
       if (minAge && maxAge) {
         filter.age = {
           $gte: parseInt(minAge),
@@ -159,10 +165,20 @@ async function run() {
       }
 
 
-      const result = await biodatasCollection.find(filter).toArray()
+      const result = await biodatasCollection.find(filter).skip(page * size).limit(size).toArray()
       res.send(result)
 
     })
+
+    app.get('/biodata-count', async (req, res) => {
+      const count = await biodatasCollection.estimatedDocumentCount()
+
+      res.send({ count })
+    })
+
+
+
+
 
     app.get('/premium-biodatas', async (req, res) => {
       const premiumMembersBiodata = await userCollection.aggregate([
@@ -415,7 +431,7 @@ async function run() {
         },
         {
           $project: {
-            
+
             maleBiodataId: '$selfBiodata.biodataId',
             femaleBiodataId: '$partnerBiodata.biodataId',
             maleBiodataType: '$selfBiodata.biodataType',
@@ -425,7 +441,7 @@ async function run() {
         },
       ]).toArray();
 
-     
+
 
       res.send(result)
     })
