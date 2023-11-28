@@ -442,7 +442,7 @@ async function run() {
       const totalFemaleBiodataCount = (await biodatasCollection.find(femaleQuery).toArray()).length
 
 
-      const premiumQuery = { status: 'premium' }
+      const premiumQuery = { biodataStatus: 'premium' }
       const totalPremiumBiodataCount = (await biodatasCollection.find(premiumQuery).toArray()).length
 
 
